@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:gender_picker/source/enums.dart';
-import 'package:gender_picker/source/gender_picker.dart';
 
 void main() {
   runApp(MyApp());
@@ -39,12 +37,41 @@ class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _controller5 = TextEditingController();
 
   int _radioGenderValue = -1;
-  bool observedSideEffect = false;
+  bool _observedSideEffect = false;
+  bool _isButtonVisible = false;
 
-  void _handleRadioValueChange1(int value) {
+  void _handleRadioValueChange(int value) {
     setState(() {
       _radioGenderValue = value;
-      print(value);
+      _isButtonVisible = isValid();
+    });
+  }
+
+  bool isValid() {
+    return !containDigits(_controller1.text) &&
+        !containDigits(_controller3.text) &&
+        _controller1.text.trim().contains(' ') &&
+        _controller1.text.isNotEmpty &&
+        _controller2.text.isNotEmpty &&
+        _controller3.text.isNotEmpty &&
+        _controller4.text.isNotEmpty &&
+        !(_observedSideEffect && _controller5.text.isEmpty) &&
+        _radioGenderValue > -1;
+  }
+
+  bool containDigits(String text) {
+    bool result = false;
+    for (int i = 0; i < text.length; i++) {
+      if (text[i].codeUnitAt(0) >= 48 && text[i].codeUnitAt(0) <= 57) {
+        result = true;
+      }
+    }
+    return result;
+  }
+
+  void _handleTextChange(text) {
+    setState(() {
+      _isButtonVisible = isValid();
     });
   }
 
@@ -60,6 +87,43 @@ class _MyHomePageState extends State<MyHomePage> {
         selectedDate = picked;
         _controller2.text = DateFormat('dd/MM/yyyy').format(selectedDate);
       });
+  }
+
+  Future<void> _showMyDialog() async {
+    _radioGenderValue = -1;
+    setState(() {
+      _radioGenderValue = -1;
+      _observedSideEffect = false;
+    });
+    _controller1.text = '';
+    _controller2.text = '';
+    _controller3.text = '';
+    _controller4.text = '';
+    _controller5.text = '';
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Thank you'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('We received your response!'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Okay'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -84,6 +148,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     TextField(
                       key: Key('textFieldName'),
                       controller: _controller1,
+                      onChanged: _handleTextChange,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(),
                         labelText: 'Name Surname',
@@ -93,6 +158,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     TextField(
                       key: Key('textFieldBirthday'),
                       controller: _controller2,
+                      onChanged: _handleTextChange,
                       onTap: () => _selectDate(context),
                       readOnly: true,
                       decoration: InputDecoration(
@@ -104,6 +170,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     TextField(
                       key: Key('textFieldCity'),
                       controller: _controller3,
+                      onChanged: _handleTextChange,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(),
                         labelText: 'City',
@@ -113,6 +180,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     TextField(
                       key: Key('textFieldVaccineType'),
                       controller: _controller4,
+                      onChanged: _handleTextChange,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(),
                         labelText: 'Vaccine type',
@@ -126,7 +194,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           key: Key('radioFemale'),
                           value: 0,
                           groupValue: _radioGenderValue,
-                          onChanged: _handleRadioValueChange1,
+                          onChanged: _handleRadioValueChange,
                         ),
                         new Text(
                           'Female',
@@ -136,7 +204,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           key: Key('radioMale'),
                           value: 1,
                           groupValue: _radioGenderValue,
-                          onChanged: _handleRadioValueChange1,
+                          onChanged: _handleRadioValueChange,
                         ),
                         new Text(
                           'Male',
@@ -148,7 +216,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           key: Key('radioOther'),
                           value: 2,
                           groupValue: _radioGenderValue,
-                          onChanged: _handleRadioValueChange1,
+                          onChanged: _handleRadioValueChange,
                         ),
                         new Text(
                           'Other',
@@ -158,10 +226,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     CheckboxListTile(
                       title: const Text('I observed side effects'),
-                      value: observedSideEffect,
+                      value: _observedSideEffect,
                       onChanged: (bool value) {
                         setState(() {
-                          observedSideEffect = value;
+                          _observedSideEffect = value;
+                          _isButtonVisible = isValid();
                         });
                       },
                       secondary: const Icon(Icons.coronavirus),
@@ -172,6 +241,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           SizedBox(height: 15),
                           TextField(
                             key: Key('textFieldSideEffects'),
+                            onChanged: _handleTextChange,
                             controller: _controller5,
                             decoration: InputDecoration(
                               border: OutlineInputBorder(),
@@ -184,7 +254,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       maintainSize: false,
                       maintainAnimation: true,
                       maintainState: true,
-                      visible: observedSideEffect,
+                      visible: _observedSideEffect,
                     ),
                     Visibility(
                       child: Column(
@@ -197,7 +267,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               label: Text('Send'),
                               icon: Icon(Icons.send),
                               onPressed: () {
-                                print('Pressed');
+                                _showMyDialog();
                               },
                               style: ButtonStyle(
                                 backgroundColor:
@@ -219,12 +289,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       maintainSize: false,
                       maintainAnimation: true,
                       maintainState: true,
-                      visible: _controller1.text.isNotEmpty &&
-                          _controller2.text.isNotEmpty &&
-                          _controller3.text.isNotEmpty &&
-                          _controller4.text.isNotEmpty &&
-                          !(observedSideEffect && _controller5.text.isEmpty) &&
-                          _radioGenderValue > -1,
+                      visible: _isButtonVisible,
                     ),
                   ],
                 ),
