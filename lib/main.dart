@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_driver/driver_extension.dart';
 
 void main() {
+  enableFlutterDriverExtension();
   runApp(MyApp());
 }
 
@@ -105,6 +107,7 @@ class _MyHomePageState extends State<MyHomePage> {
       barrierDismissible: false, // user must tap button!
       builder: (BuildContext context) {
         return AlertDialog(
+          key: Key('dialog'),
           title: Text('Thank you'),
           content: SingleChildScrollView(
             child: ListBody(
@@ -115,6 +118,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           actions: <Widget>[
             TextButton(
+              key: Key('btnDialog'),
               child: Text('Okay'),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -142,7 +146,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     Text(
-                      'Please fill the survey',
+                      'Please fill out the survey',
                     ),
                     SizedBox(height: 15),
                     TextField(
